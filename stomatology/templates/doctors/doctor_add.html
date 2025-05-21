@@ -1,0 +1,56 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block content %}
+    <link rel="stylesheet" href="{% static "css/form.css" %}">
+
+    <div class="w-25 container">
+        <div align="center w-50">
+            <h3 class="text-center" style="padding: 10px">Добавить запись о враче</h3>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group mb-3">
+                    <label for="{{ form.full_name.id_for_label }}">ФИО врача</label>
+                    {{ form.full_name }}
+                    {% if form.full_name.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.full_name.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="{{ form.phone_number.id_for_label }}">Телефон</label>
+                    {{ form.phone_number }}
+                    {% if form.phone_number.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.phone_number.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="{{ form.office_number.id_for_label }}">Кабинет</label>
+                    {{ form.office_number }}
+                    {% if form.office_number.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.office_number.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div align="center">
+                    <input class="save btn btn-success" type="submit" value="Добавить"/>
+                    <a href="{% url 'doctors'%}">
+                        <button class="btn btn-secondary" type="button"> Отмена </button>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock content %}

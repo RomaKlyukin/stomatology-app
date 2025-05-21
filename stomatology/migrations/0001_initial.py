@@ -5,6 +5,7 @@ import django.db.models.deletion
 import phonenumber_field.modelfields
 
 
+
 class Migration(migrations.Migration):
 
     initial = True
@@ -13,6 +14,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+
         migrations.CreateModel(
             name='Doctor',
             fields=[

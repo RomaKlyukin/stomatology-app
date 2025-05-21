@@ -1,0 +1,11 @@
+.error-field {
+    border: 1px solid red;
+}
+
+.errorlist {
+    margin-top: 5px;
+    padding-left: 0;
+    list-style: none;
+    color: red;
+    font-size: 0.9em;
+}
