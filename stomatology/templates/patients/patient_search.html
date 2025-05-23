@@ -1,0 +1,40 @@
+<div class="container" align="center">
+    <table class="table table-bordered table-striped table-hover w-100" id="patient_list">
+        <thead align='center'>
+            <tr class="table-primary">
+                <th>№</th>
+                <th>ФИО</th>
+                <th>Телефон</th>
+                <th>Адрес проживания</th>
+                {% if perms.stomatology.change_patient and perms.stomatology.delete_patient %}
+                    <th style="border: none;"></th>
+                    <th style="border: none;"></th>
+                {% endif %}
+            </tr>
+        </thead>
+        {% for patient in patients %}
+            <tr>
+                <td>{{ patient.id }}</td>
+                <td>{{ patient.full_name }}</td>
+                <td>{{ patient.phone_number }}</td>
+                <td>{{ patient.patient_address }}</td>
+                {% if perms.stomatology.change_patient and perms.stomatology.delete_patient%}
+                    <td style="border: none;" align='center'> 
+                        <a href="{% url 'patient_edit' patient.pk %}" title="Изменить" style="color:rgb(113, 111, 111);">
+                            <i class="bi bi-person-fill-gear" style="font-size: 25px;"></i>
+                        </a>
+                    </td>
+                    <td style="border: none;" align='center'> 
+                        <a href="{% url 'patient_delete' patient.pk %}" title="Удалить" style="color:rgb(210, 19, 19);">
+                            <i class="bi bi-person-x-fill" style="font-size: 25px;"></i>
+                        </a>
+                    </td>
+                {% endif %}
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">Пациенты не найдены</td>
+            </tr>
+        {% endfor %}
+    </table>
+</div>

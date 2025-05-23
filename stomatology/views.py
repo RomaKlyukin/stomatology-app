@@ -13,7 +13,7 @@ from django.contrib.postgres.search import TrigramSimilarity, SearchVector
 
 
 from .forms import *
-from .models import Doctor
+from .models import Doctor, Patient
 
 
 def index(request):
@@ -71,10 +71,10 @@ def doctors_get(request):
             Q(similarity_full_name=0.1)
         )
     else:
-        doctors = Doctor.objects.all()
+        doctors = Doctor.objects.all().order_by('id')
             
     if request.headers.get('HX-Request'):  # Проверка на AJAX (HTMX)
-        html = render_to_string('doctors/doctor_search.html', {'doctors': doctors})
+        html = render(request, 'doctors/doctor_search.html', {'doctors': doctors})
         return HttpResponse(html)
 
     return render(request, 'doctors/doctor_main.html', {'doctors': doctors})
@@ -100,3 +100,48 @@ class DoctorDelete(DeleteView):
     pk_url_kwarg = 'pk'
     success_url = reverse_lazy('doctors')
     permission_required = 'stomatology.delete_doctor'
+
+
+def patients_get(request):
+    FIELDS = [field.name for field in Patient._meta.get_fields()]
+    search = request.GET.get('q')
+    if search:
+        patients = Patient.objects.annotate(
+            search=SearchVector(*FIELDS),
+            similarity_phone_number=TrigramSimilarity('phone_number', search),
+            similarity_full_name=TrigramSimilarity('full_name', search)
+        ).filter(
+            Q(search=search) |
+            Q(similarity_phone_number__gt=0.25) |
+            Q(similarity_full_name=0.1)
+        )
+    else:
+        patients = Patient.objects.all().order_by('id')
+            
+    if request.headers.get('HX-Request'):  # Проверка на AJAX (HTMX)
+        html = render(request, 'patients/patient_search.html', {'patients': patients})
+        return HttpResponse(html)
+
+    return render(request, 'patients/patient_main.html', {'patients': patients})
+
+class PatientAdd(CreateView, PermissionRequiredMixin):
+    model = Patient
+    form_class = PatientForm
+    template_name = 'patients/patient_add.html'
+    success_url = reverse_lazy('patients')
+    permission_required = 'stomatology.add_patient'
+
+class PatientEdit(UpdateView):
+    model = Patient
+    form_class = PatientForm
+    template_name = 'patients/patient_edit.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('patients')
+    permission_required = 'stomatology.change_patient'
+
+class PatientDelete(DeleteView):
+    model = Patient
+    template_name = 'patients/patient_delete.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('patients')
+    permission_required = 'stomatology.delete_patient'

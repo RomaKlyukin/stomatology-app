@@ -1,0 +1,30 @@
+{% extends "main/base.html" %}
+
+{% block content %}
+    {% load static %}
+
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <link rel="stylesheet" href="{% static "css/errors.css" %}">
+    <div class="container" align="center">
+            <h1 style="display:inline-block; "> Пациенты </h1>
+            {% if perms.stomatology.add_patient %}
+                <a href="{% url "patient_add" %}" title="Добавить" style="padding-left: 15px;">
+                    <i class="bi bi-person-plus-fill" style="font-size: 30px; color:green;"></i>
+                </a>
+            {% endif %}
+        </div>
+        
+        <div align="center" style="position: relative; top: 8px">
+            <form method="GET">
+                {% csrf_token %}
+                <input name="q" required type="text" placeholder="Поиск по таблице          🔍"
+                    hx-get="{% url 'patients' %}" 
+                    hx-trigger="input changed delay:300ms"
+                    hx-target="#patient_list"/
+                >
+            </form>
+        </div>
+        <br>
+        {% include "patients/patient_search.html" %}
+    </div>
+{% endblock content %}
