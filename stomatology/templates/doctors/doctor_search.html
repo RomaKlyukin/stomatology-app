@@ -6,8 +6,10 @@
                 <th>ФИО</th>
                 <th>Телефон</th>
                 <th>Кабинет</th>
-                <th style="border: none;"></th>
-                <th style="border: none;"></th>
+                {% if perms.stomatology.change_doctor and perms.stomatology.delete_doctor %}
+                    <th style="border: none;"></th>
+                    <th style="border: none;"></th>
+                {% endif %}
             </tr>
         </thead>
         {% for doctor in doctors %}
@@ -16,16 +18,18 @@
                 <td>{{ doctor.full_name }}</td>
                 <td>{{ doctor.phone_number }}</td>
                 <td>{{ doctor.office_number }}</td>
-                <td style="border: none;" align='center'> 
-                    <a href="{% url 'doctor_edit' doctor.pk %}" title="Изменить" style="color:rgb(113, 111, 111);">
-                        <i class="bi bi-person-fill-gear" style="font-size: 25px;"></i>
-                    </a>
-                </td>
-                <td style="border: none;" align='center'> 
-                    <a href="{% url 'doctor_delete' doctor.pk %}" title="Удалить" style="color:rgb(210, 19, 19);">
-                        <i class="bi bi-person-x-fill" style="font-size: 25px;"></i>
-                    </a>
-                </td>
+                {% if perms.stomatology.change_doctor and perms.stomatology.delete_doctor%}
+                    <td style="border: none;" align='center'> 
+                        <a href="{% url 'doctor_edit' doctor.pk %}" title="Изменить" style="color:rgb(113, 111, 111);">
+                            <i class="bi bi-person-fill-gear" style="font-size: 25px;"></i>
+                        </a>
+                    </td>
+                    <td style="border: none;" align='center'> 
+                        <a href="{% url 'doctor_delete' doctor.pk %}" title="Удалить" style="color:rgb(210, 19, 19);">
+                            <i class="bi bi-person-x-fill" style="font-size: 25px;"></i>
+                        </a>
+                    </td>
+                {% endif %}
             </tr>
         {% empty %}
             <tr>

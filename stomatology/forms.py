@@ -1,7 +1,65 @@
 from django import forms
-from django.forms import ModelForm, TextInput
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.core.validators import EmailValidator
+from django.contrib.auth.models import User
+from django.forms import ModelForm, TextInput, ValidationError
 
 from .models import Doctor
+
+import re
+
+class UserRegisterForm(UserCreationForm):
+    """
+    Переопределенная форма регистрации пользователей
+    """
+    class Meta(UserCreationForm.Meta):
+        fields = UserCreationForm.Meta.fields + ('email', 'first_name', 'last_name')
+        widgets = {
+            'email': forms.EmailInput(attrs={'placeholder': 'example@mail.ru'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        """
+        Обновление стилей формы регистрации
+        """
+        super().__init__(*args, **kwargs)
+
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({"class": "form-control", "autocomplete": "off"})
+        
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+
+        # Проверка на корректность формата email
+        if email and not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            raise forms.ValidationError('Введите корректный адрес электронной почты.')
+
+        if email and User.objects.filter(email=email).exists():
+            raise forms.ValidationError('Такой email уже используется в системе')
+
+        return email
+
+class UserLoginForm(AuthenticationForm):
+    """
+    Форма авторизации на сайте
+    """
+
+    error_messages = {
+        'invalid_login': "Неверный логин или пароль",
+    }
+
+    def __init__(self, *args, **kwargs):
+        """
+        Обновление стилей формы регистрации
+        """
+        super().__init__(*args, **kwargs)
+        
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({
+                'class': 'form-control',
+                'autocomplete': 'off'
+            })
 
 
 class DoctorForm(ModelForm):
