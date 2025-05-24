@@ -1,0 +1,69 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block content %}
+    <link rel="stylesheet" href="{% static "css/form.css" %}">
+
+    <div class="w-25 container">
+        <div align="center w-50">
+            <h3 class="text-center" style="padding: 10px">Добавить запись о расписании врача</h3>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group mb-3">
+                    <label for="{{ form.doctor.id_for_label }}">ФИО врача</label>
+                    {{ form.doctor }}
+                    {% if form.doctor.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.doctor.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="{{ form.day_week.id_for_label }}">День недели</label>
+                    {{ form.day_week }}
+                    {% if form.day_week.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.day_week.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="{{ form.start_reception.id_for_label }}">Начало приема</label>
+                    {{ form.start_reception }}
+                    {% if form.start_reception.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.start_reception.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="{{ form.end_reception.id_for_label }}">Конец приема</label>
+                    {{ form.end_reception }}
+                    {% if form.end_reception.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.end_reception.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div align="center">
+                    <input class="save btn btn-success" type="submit" value="Добавить"/>
+                    <a href="{% url 'schedules'%}">
+                        <button class="btn btn-secondary" type="button"> Отмена </button>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock content %}

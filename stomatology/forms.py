@@ -1,9 +1,10 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
-from django.forms import ModelForm, TextInput
+from django.forms import ModelForm, TextInput, TimeInput, DateInput
 
-from .models import Doctor, Patient
+
+from .models import Doctor, Patient, Schedule
 
 import re
 
@@ -104,7 +105,7 @@ class DoctorForm(ModelForm):
             raise forms.ValidationError("Этот номер телефона уже используется")
         
         return phone_number
-    
+
 class PatientForm(ModelForm):
     class Meta:
         model = Patient
@@ -148,3 +149,35 @@ class PatientForm(ModelForm):
             raise forms.ValidationError("Этот номер телефона уже используется")
         
         return phone_number
+
+class ScheduleForm(ModelForm):
+    class Meta:
+        model = Schedule
+        fields = ["doctor", "day_week", "start_reception", "end_reception"]
+        error_css_class = 'error-field'  # CSS-класс для поля с ошибкой
+
+        widgets = {
+            "start_reception": TimeInput(format='%H:%M', attrs={"type": "time"}),
+            "end_reception": TimeInput(format='%H:%M', attrs={"type": "time"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({
+                'class': 'form-control',
+                'autocomplete': 'off'
+            })
+
+        self.fields['doctor'].widget.attrs.update({
+            'class': 'form-select',
+        })
+        self.fields['day_week'].widget.attrs.update({
+            'class': 'form-select',
+        })
+
+        self.fields['doctor'].empty_label = "Выберите врача"
+        self.fields["day_week"].choices = [("", "Выберите день недели")] + list(
+            self.fields["day_week"].choices
+        )

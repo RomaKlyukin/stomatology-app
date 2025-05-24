@@ -1,19 +1,19 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.urls import reverse_lazy
-from django.template.loader import render_to_string
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth import login
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.db.models import Q
+from django.db.models import Q, Case, When, Value, CharField
+from django.db.models.functions import Cast
 from django.contrib.postgres.search import TrigramSimilarity, SearchVector
 
 
 from .forms import *
-from .models import Doctor, Patient
+from .models import Doctor, Patient, Schedule
 
 
 def index(request):
@@ -145,3 +145,65 @@ class PatientDelete(DeleteView):
     pk_url_kwarg = 'pk'
     success_url = reverse_lazy('patients')
     permission_required = 'stomatology.delete_patient'
+
+def schedules_get(request):
+    FIELDS = ['doctor__full_name']
+    search = request.GET.get('q')
+
+    # Словарь соответствия номеров дней и их названий
+    DAY_WEEK = {
+        1: "понедельник",
+        2: "вторник",
+        3: "среда",
+        4: "четверг",
+        5: "пятница",
+        6: "суббота",
+        7: "воскресенье"
+    }
+
+    if search:
+        schedules = Schedule.objects.annotate(
+            day_name=Case(
+                *[When(day_week=k, then=Value(v)) for k, v in DAY_WEEK.items()],
+                output_field=CharField()
+            ),
+            search=SearchVector(*FIELDS),
+            day_similarity=TrigramSimilarity('day_name', search),
+            similarity_doctor=TrigramSimilarity('doctor__full_name', search),
+            similarity_start_reception=TrigramSimilarity(Cast('start_reception', CharField()), search)
+        ).filter(
+            Q(search=search) |
+            Q(day_similarity__gt=0.2) |
+            Q(similarity_doctor=0.1) |
+            Q(similarity_start_reception__gt=0.4)
+        )
+    else:
+        schedules = Schedule.objects.all().order_by('id')
+            
+    if request.headers.get('HX-Request'):  # Проверка на AJAX (HTMX)
+        html = render(request, 'schedules/schedule_search.html', {'schedules': schedules})
+        return HttpResponse(html)
+
+    return render(request, 'schedules/schedule_main.html', {'schedules': schedules})
+
+class ScheduleAdd(CreateView, PermissionRequiredMixin):
+    model = Schedule
+    form_class = ScheduleForm
+    template_name = 'schedules/schedule_add.html'
+    success_url = reverse_lazy('schedules')
+    permission_required = 'stomatology.add_schedule'
+
+class ScheduleEdit(UpdateView):
+    model = Schedule
+    form_class = ScheduleForm
+    template_name = 'schedules/schedule_edit.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('schedules')
+    permission_required = 'stomatology.change_schedule'
+
+class ScheduleDelete(DeleteView):
+    model = Schedule
+    template_name = 'schedules/schedule_delete.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('schedules')
+    permission_required = 'stomatology.delete_schedule'

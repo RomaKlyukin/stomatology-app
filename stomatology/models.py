@@ -83,7 +83,7 @@ class Schedule(models.Model):
     ]
 
     doctor = models.ForeignKey(Doctor, on_delete=models.SET_NULL, null=True, verbose_name="Врач")
-    day_week = models.PositiveIntegerField("День недели", choices=DAY_WEEK_CHOICES)
+    day_week = models.PositiveIntegerField("День недели", choices=DAY_WEEK_CHOICES, default=0)
     start_reception = models.TimeField("Начало приема")
     end_reception = models.TimeField("Конец приема")
 
@@ -93,5 +93,5 @@ class Schedule(models.Model):
         verbose_name_plural = 'Расписание работы врачей'
 
     def __str__(self):
-        return f"{self.doctor} - {self.day_week}"
+        return f"{self.doctor} - {self.get_day_week_display()}"
     
