@@ -22,4 +22,14 @@ urlpatterns = [
     path('schedule/<int:pk>/edit', views.ScheduleEdit.as_view(), name='schedule_edit'),
     path("schedule/<int:pk>/delete/", views.ScheduleDelete.as_view(), name="schedule_delete"),
 
+    path('services/', views.services_get, name='services'),
+    path('service/add/', views.ServiceAdd.as_view(), name='service_add'),
+    path('service/<int:pk>/edit', views.ServiceEdit.as_view(), name='service_edit'),
+    path("service/<int:pk>/delete/", views.ServiceDelete.as_view(), name="service_delete"),
+
+    path('services_rendered/', views.service_rendereds_get, name='services_rendered'),
+    path('service_rendered/add/', views.Service_renderedAdd.as_view(), name='service_rendered_add'),
+    path('service_rendered/<int:pk>/edit', views.Service_renderedEdit.as_view(), name='service_rendered_edit'),
+    path("service_rendered/<int:pk>/delete/", views.Service_renderedDelete.as_view(), name="service_rendered_delete"),
+
 ]

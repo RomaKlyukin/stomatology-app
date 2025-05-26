@@ -1,0 +1,22 @@
+{% extends "main/base.html" %}
+
+{% block content %}
+{% load static %}
+    <link rel="stylesheet" href="{% static "css/form.css" %}">
+
+    <div class="w-25 container">
+        <div align="center w-50">
+            <h3 class="text-center" style="padding: 10px"> Удаление записи об услуге </h3>
+            <form method="POST">
+                {% csrf_token %}
+                <div align="center">
+                    <p>Вы уверены что хотите удалить запись об услуге "<strong>{{ service.service_name }}</strong>"?</p>
+                    <input class="save btn btn-danger" type="submit" value="Удалить" />
+                    <a href="{% url 'services'%}">
+                        <button class="btn btn-secondary" type="button"> Отмена </button>
+                    </a>    
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock content %}

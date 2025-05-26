@@ -69,7 +69,7 @@ class Service_rendered(models.Model):
         ordering = ['-id']
 
     def __str__(self):
-        return f"{str(self.id)} ({self.service}({self.quantity}))"
+        return f"{str(self.id)} ({self.service} ({self.quantity}))"
 
 class Schedule(models.Model):
     DAY_WEEK_CHOICES = [

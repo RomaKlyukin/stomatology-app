@@ -1,0 +1,61 @@
+{% extends "main/base.html" %}
+
+{% block content %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static "css/form.css" %}">
+
+    <div class="w-25 container">
+        <div align="center w-50">
+            <h3 class="text-center" style="padding: 10px"> Изменить запись об услуге </h3>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group mb-3">
+                    <label for="{{ form.service.id_for_label }}">Наименование услуги</label>
+                    {{ form.service }}
+                    {% if form.service.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.service.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="{{ form.quantity.id_for_label }}">Количество</label>
+                    <div class="input-group mb-3">
+                        {{ form.quantity }}
+                    </div>
+                    {% if form.quantity.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.quantity.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="{{ form.number_reception.id_for_label }}">Прием</label>
+                    <div class="input-group mb-3">
+                        {{ form.number_reception }}
+                    </div>
+                    {% if form.number_reception.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.number_reception.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div align="center">
+                    <input class="save btn btn-success" type="submit" value="Принять"/>
+                    <a href="{% url 'services_rendered'%}">
+                        <button class="btn btn-secondary" type="button"> Отмена </button>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock content %}

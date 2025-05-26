@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.forms import ModelForm, TextInput, TimeInput, DateInput
 
 
-from .models import Doctor, Patient, Schedule
+from .models import Doctor, Patient, Schedule, Service, Service_rendered
 
 import re
 
@@ -181,3 +181,50 @@ class ScheduleForm(ModelForm):
         self.fields["day_week"].choices = [("", "Выберите день недели")] + list(
             self.fields["day_week"].choices
         )
+
+class ServiceForm(ModelForm):
+    class Meta:
+        model = Service
+        fields = ["service_name", "cost"]
+
+        widgets = {
+            "service_name": TextInput(
+                attrs={"class": "form-control", "placeholder": "Пломбирование зуба"}
+            ),
+            "cost": TextInput(attrs={"class": "form-control", "placeholder": "5000", "data-prefix": "$", "type": "number"}),
+        }
+
+        error_css_class = 'error-field'  # CSS-класс для поля с ошибкой
+
+    def clean_cost(self):
+        cost = self.cleaned_data.get("cost")
+        if cost and cost < 0:
+            raise forms.ValidationError("Введите положительное число!")
+        return cost
+    
+class Service_renderedForm(ModelForm):
+    class Meta:
+        model = Service_rendered
+        fields = ["service", "quantity", "number_reception"]
+
+        error_css_class = 'error-field'  # CSS-класс для поля с ошибкой
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({
+                'class': 'form-control',
+                'autocomplete': 'off'
+            })
+
+        self.fields['service'].widget.attrs.update({
+            'class': 'form-select',
+        })
+        self.fields['number_reception'].widget.attrs.update({
+            'class': 'form-select',
+        })
+
+        self.fields['service'].empty_label = "Выберите услугу"
+        self.fields['number_reception'].empty_label = "Выберите прием"
+        

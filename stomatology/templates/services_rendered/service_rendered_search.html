@@ -1,0 +1,38 @@
+<div class="container" align="center">
+    <table class="table table-bordered table-striped table-hover w-100" id="service_rendered_list">
+        <thead align='center'>
+            <tr class="table-primary">
+                <th>Наименование услуги</th>
+                <th>Количество</th>
+                <th>Прием</th>
+                {% if perms.stomatology.change_service_rendered and perms.stomatology.delete_service_rendered %}
+                    <th style="border: none;"></th>
+                    <th style="border: none;"></th>
+                {% endif %}
+            </tr>
+        </thead>
+        {% for service_rendered in services_rendered %}
+            <tr>
+                <td>{{ service_rendered.service }}</td>
+                <td>{{ service_rendered.quantity }}</td>
+                <td>{{ service_rendered.number_reception }}</td>
+                {% if perms.stomatology.change_service_rendered and perms.stomatology.delete_service_rendered%}
+                    <td style="border: none;" align='center'> 
+                        <a href="{% url 'service_rendered_edit' service_rendered.pk %}" title="Изменить" style="color:rgb(113, 111, 111);">
+                            <i class="bi bi-pencil-square" style="font-size: 25px;"></i>
+                        </a>
+                    </td>
+                    <td style="border: none;" align='center'> 
+                        <a href="{% url 'service_rendered_delete' service_rendered.pk %}" title="Удалить" style="color:rgb(210, 19, 19);">
+                            <i class="bi bi-trash3-fill" style="font-size: 25px;"></i>
+                        </a>
+                    </td>
+                {% endif %}
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">Записи не найдены</td>
+            </tr>
+        {% endfor %}
+    </table>
+</div>

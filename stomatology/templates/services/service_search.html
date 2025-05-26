@@ -1,0 +1,36 @@
+<div class="container" align="center">
+    <table class="table table-bordered table-striped table-hover w-100" id="service_list">
+        <thead align='center'>
+            <tr class="table-primary">
+                <th>Наименование</th>
+                <th>Стоимость</th>
+                {% if perms.stomatology.change_service and perms.stomatology.delete_service %}
+                    <th style="border: none;"></th>
+                    <th style="border: none;"></th>
+                {% endif %}
+            </tr>
+        </thead>
+        {% for service in services %}
+            <tr>
+                <td>{{ service.service_name }}</td>
+                <td>{{ service.cost }}</td>
+                {% if perms.stomatology.change_service and perms.stomatology.delete_service%}
+                    <td style="border: none;" align='center'> 
+                        <a href="{% url 'service_edit' service.pk %}" title="Изменить" style="color:rgb(113, 111, 111);">
+                            <i class="bi bi-pencil-square" style="font-size: 25px;"></i>
+                        </a>
+                    </td>
+                    <td style="border: none;" align='center'> 
+                        <a href="{% url 'service_delete' service.pk %}" title="Удалить" style="color:rgb(210, 19, 19);">
+                            <i class="bi bi-trash3-fill" style="font-size: 25px;"></i>
+                        </a>
+                    </td>
+                {% endif %}
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">Услуги не найдены</td>
+            </tr>
+        {% endfor %}
+    </table>
+</div>

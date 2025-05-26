@@ -13,7 +13,7 @@ from django.contrib.postgres.search import TrigramSimilarity, SearchVector
 
 
 from .forms import *
-from .models import Doctor, Patient, Schedule
+from .models import Doctor, Patient, Schedule, Service
 
 
 def index(request):
@@ -207,3 +207,88 @@ class ScheduleDelete(DeleteView):
     pk_url_kwarg = 'pk'
     success_url = reverse_lazy('schedules')
     permission_required = 'stomatology.delete_schedule'
+
+def services_get(request):
+    FIELDS = [field.name for field in Service._meta.get_fields()]
+    search = request.GET.get('q')
+    if search:
+        services = Service.objects.annotate(
+            search=SearchVector(*FIELDS),
+            similarity_service_name=TrigramSimilarity('service_name', search),
+        ).filter(
+            Q(search=search) |
+            Q(similarity_service_name__gt=0.25)
+        )
+    else:
+        services = Service.objects.all().order_by('id')
+            
+    if request.headers.get('HX-Request'):  # Проверка на AJAX (HTMX)
+        html = render(request, 'services/service_search.html', {'services': services})
+        return HttpResponse(html)
+
+    return render(request, 'services/service_main.html', {'services': services})
+
+class ServiceAdd(CreateView, PermissionRequiredMixin):
+    model = Service
+    form_class = ServiceForm
+    template_name = 'services/service_add.html'
+    success_url = reverse_lazy('services')
+    permission_required = 'stomatology.add_service'
+
+class ServiceEdit(UpdateView):
+    model = Service
+    form_class = ServiceForm
+    template_name = 'services/service_edit.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('services')
+    permission_required = 'stomatology.change_service'
+
+class ServiceDelete(DeleteView):
+    model = Service
+    template_name = 'services/service_delete.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('services')
+    permission_required = 'stomatology.delete_service'
+
+def service_rendereds_get(request):
+    FIELDS = [field.name for field in Service_rendered._meta.get_fields()]
+    search = request.GET.get('q')
+    if search:
+        services_rendered = Service_rendered.objects.annotate(
+            search=SearchVector(*FIELDS),
+            similarity_service=TrigramSimilarity('service__service_name', search),
+        ).filter(
+            Q(search=search) |
+            Q(similarity_service_name__gt=0.25)
+        )
+    else:
+        services_rendered = Service_rendered.objects.all().order_by('id')
+            
+    if request.headers.get('HX-Request'):  # Проверка на AJAX (HTMX)
+        html = render(request, 'services_rendered/service_rendered_search.html', {'services_rendered': services_rendered})
+        return HttpResponse(html)
+
+    return render(request, 'services_rendered/service_rendered_main.html', {'services_rendered': services_rendered})
+
+class Service_renderedAdd(CreateView, PermissionRequiredMixin):
+    model = Service_rendered
+    form_class = Service_renderedForm
+    template_name = 'services_rendered/service_rendered_add.html'
+    success_url = reverse_lazy('services_rendered')
+    permission_required = 'stomatology.add_service_rendered'
+
+class Service_renderedEdit(UpdateView):
+    model = Service_rendered
+    form_class = Service_renderedForm
+    template_name = 'services_rendered/service_rendered_edit.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('services_rendered')
+    permission_required = 'stomatology.change_service_rendered'
+
+class Service_renderedDelete(DeleteView):
+    model = Service_rendered
+    template_name = 'services_rendered/service_rendered_delete.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('services_rendered')
+    permission_required = 'stomatology.delete_service_rendered'
+
