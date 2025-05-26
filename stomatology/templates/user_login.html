@@ -1,7 +1,7 @@
 {% extends "main/base.html" %}
-{% load static %}
 
 {% block content %}
+    {% load static %}
     <link rel="stylesheet" href="{% static "css/form.css" %}">
 
     {% if messages %}
@@ -14,7 +14,7 @@
         {% endfor %}
     {% endif %}
 
-    <div class="w-25 container">
+    <div class="w-25 container_form">
         <div align="center w-50">
             <h3 class="text-center" style="padding: 10px">Авторизация</h3>
             <form method="POST" action="{% url 'login' %}">

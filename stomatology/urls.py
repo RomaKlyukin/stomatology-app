@@ -31,5 +31,10 @@ urlpatterns = [
     path('service_rendered/add/', views.Service_renderedAdd.as_view(), name='service_rendered_add'),
     path('service_rendered/<int:pk>/edit', views.Service_renderedEdit.as_view(), name='service_rendered_edit'),
     path("service_rendered/<int:pk>/delete/", views.Service_renderedDelete.as_view(), name="service_rendered_delete"),
+    
+    path('receptions/', views.receptions_get, name='receptions'),
+    path('reception/add/', views.ReceptionAdd.as_view(), name='reception_add'),
+    path('reception/<int:pk>/edit', views.ReceptionEdit.as_view(), name='reception_edit'),
+    path("reception/<int:pk>/delete/", views.ReceptionDelete.as_view(), name="reception_delete"),
 
 ]

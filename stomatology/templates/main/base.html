@@ -11,11 +11,72 @@
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Andika&subset=cyrillic">
     
         <link rel="stylesheet" href="{% static "css/base.css" %}">
-        
+        <link rel="stylesheet" href="{% static "css/my_footer_css.css" %}">
+
         <title>{{ title }}</title>
     </head>
     <body>
-        {% block content %}
-        {% endblock %}
+        <header>
+            <nav class="navbar navbar-expand-lg fixed-top">
+                <div class="container">
+                    <a class="navbar-brand" href="{% url "home" %}"><h2 class="text-light">IT-Стоматология</h2></a>
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <ul class="navbar-nav nav-tabs me-auto mb-5 mb-lg-0">
+                            <li class="nav-item">
+                                <a class="nav-link  text-white" href="{% url "doctors" %}">Врачи</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link  text-white" href="{% url "schedules" %}">Расписание врачей</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link  text-white" href="{% url "patients" %}">Пациенты</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link  text-white" href="{% url "receptions" %}">Приёмы</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link  text-white" href="{% url "services" %}">Услуги</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link  text-white" href="{% url "services_rendered" %}">Оказанные услуги</a>
+                            </li>
+                        </ul>
+                        {% if not request.user.is_authenticated %}
+                            <div class="navbar-nav">
+                                <a href="{% url "login" %}">
+                                    <button class="btn btn-outline-light" type="submit">Войти</button>
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="navbar-nav">
+                                <a href="{% url "logout" %}">
+                                    <button class="btn btn-outline-danger" type="submit">Выйти</button>
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </nav>
+        </header>
+        <section>
+            <div class="container">
+                <div class="row justify-content-center mt-2">
+                    <div style="padding-top: 80px; padding-bottom: 30px;" align="center">
+                        <!-- Контент на странице -->
+                        {% block content %}
+                        {% endblock content %}
+                    </div>
+                    <div class="col-lg-10">
+                        <!-- Контент на странице -->
+                        {% block index %}{% endblock index %}
+                     </div>
+                </div>
+            </div>
+        </section>
+        <footer class="py-4 navbar-fixed-bottom" style="background-color: #444242;">
+            <div class="container">
+                <p class="m-0 text-center text-white">Copyright &copy; Клюкин Роман 22-КТ 2025</p>
+            </div>
+        </footer>
     </body>
 </html>

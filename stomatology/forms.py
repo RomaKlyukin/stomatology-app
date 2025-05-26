@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.forms import ModelForm, TextInput, TimeInput, DateInput
 
 
-from .models import Doctor, Patient, Schedule, Service, Service_rendered
+from .models import Doctor, Patient, Schedule, Service, Service_rendered, Reception
 
 import re
 
@@ -227,4 +227,35 @@ class Service_renderedForm(ModelForm):
 
         self.fields['service'].empty_label = "Выберите услугу"
         self.fields['number_reception'].empty_label = "Выберите прием"
+
+class ReceptionForm(ModelForm):
+    class Meta:
+        model = Reception
+        fields = ["date_reception", "time_reception", "doctor", "patient"]
+        error_css_class = 'error-field'  # CSS-класс для поля с ошибкой
+
+        widgets = {
+            "date_reception": DateInput(format='%Y-%m-%d', attrs={'type': "date"}),
+            "time_reception": TimeInput(format='%H:%M', attrs={"type": "time"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({
+                'class': 'form-control',
+                'autocomplete': 'off'
+            })
+
+        self.fields['doctor'].widget.attrs.update({
+            'class': 'form-select',
+        })
+        self.fields['doctor'].empty_label = "Выберите врача"
+
+        self.fields['patient'].widget.attrs.update({
+            'class': 'form-select',
+        })
+        self.fields['patient'].empty_label = "Выберите пациента"
+
         

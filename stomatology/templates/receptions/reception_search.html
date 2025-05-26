@@ -1,0 +1,40 @@
+<div class="container" align="center">
+    <table class="table table-bordered table-striped table-hover w-100" id="reception_list">
+        <thead align='center'>
+            <tr class="table-primary">
+                <th>Дата</th>
+                <th>Время</th>
+                <th>Врач</th>
+                <th>Пациент</th>
+                {% if perms.stomatology.change_reception and perms.stomatology.delete_reception %}
+                    <th style="border: none;"></th>
+                    <th style="border: none;"></th>
+                {% endif %}
+            </tr>
+        </thead>
+        {% for reception in receptions %}
+            <tr>
+                <td>{{ reception.date_reception }}</td>
+                <td>{{ reception.time_reception }}</td>
+                <td>{{ reception.doctor }}</td>
+                <td>{{ reception.patient }}</td>
+                {% if perms.stomatology.change_reception and perms.stomatology.delete_reception%}
+                    <td style="border: none;" align='center'> 
+                        <a href="{% url 'reception_edit' reception.pk %}" title="Изменить" style="color:rgb(113, 111, 111);">
+                            <i class="bi bi-pencil-square" style="font-size: 25px;"></i>
+                        </a>
+                    </td>
+                    <td style="border: none;" align='center'> 
+                        <a href="{% url 'reception_delete' reception.pk %}" title="Удалить" style="color:rgb(210, 19, 19);">
+                            <i class="bi bi-trash3-fill" style="font-size: 25px;"></i>
+                        </a>
+                    </td>
+                {% endif %}
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">Приёмы не найдены</td>
+            </tr>
+        {% endfor %}
+    </table>
+</div>

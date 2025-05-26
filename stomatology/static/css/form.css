@@ -1,10 +1,8 @@
-.container {
+.container_form {
     background-color: rgba(198, 237, 236, 0.954);
     box-shadow: 0px 10px 20px 0px rgba(0, 0, 0, 0.5);
     border-radius: 25px;
-    padding: 20px;
-    position: relative; 
-    top: 120px;
+    padding: 20px; 
 }
 
 button {

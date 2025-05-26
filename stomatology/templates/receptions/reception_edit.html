@@ -1,0 +1,69 @@
+{% extends "main/base.html" %}
+
+{% block content %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static "css/form.css" %}">
+
+    <div class="w-25 container">
+        <div align="center w-50">
+            <h3 class="text-center" style="padding: 10px"> Изменить запись о приёме </h3>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group mb-3">
+                    <label for="{{ form.date_reception.id_for_label }}">Дата</label>
+                    {{ form.date_reception }}
+                    {% if form.date_reception.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.date_reception.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="{{ form.time_reception.id_for_label }}">Время</label>
+                    {{ form.time_reception }}
+                    {% if form.time_reception.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.time_reception.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="{{ form.doctor.id_for_label }}">Врач</label>
+                    {{ form.doctor }}
+                    {% if form.doctor.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.doctor.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="{{ form.patient.id_for_label }}">Пациент</label>
+                    {{ form.patient }}
+                    {% if form.patient.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.patient.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div align="center">
+                    <input class="save btn btn-success" type="submit" value="Принять"/>
+                    <a href="{% url 'receptions'%}">
+                        <button class="btn btn-secondary" type="button"> Отмена </button>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock content %}

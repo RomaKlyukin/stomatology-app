@@ -7,17 +7,22 @@ from django.contrib.auth import login
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.db.models import Q, Case, When, Value, CharField
+from django.db.models import Q, Case, When, Value, CharField, Func, F
 from django.db.models.functions import Cast
 from django.contrib.postgres.search import TrigramSimilarity, SearchVector
 
 
 from .forms import *
-from .models import Doctor, Patient, Schedule, Service
+from .models import Doctor, Patient, Schedule, Service, Reception
 
 
 def index(request):
-    return render(request, 'main/index.html')
+    context = {
+        'title': 'IT-Стоматология',
+        'content_name': 'IT-Стоматология',
+        'content': 'грамотное лечение ваших зубов'
+    }
+    return render(request, 'main/index.html', context=context)
 
 class UserRegisterView(SuccessMessageMixin, CreateView):
     form_class = UserRegisterForm
@@ -292,3 +297,56 @@ class Service_renderedDelete(DeleteView):
     success_url = reverse_lazy('services_rendered')
     permission_required = 'stomatology.delete_service_rendered'
 
+def receptions_get(request):
+    FIELDS = ['doctor__full_name', "patient__full_name"]
+    search = request.GET.get('q')
+
+    
+    class DateFormat(Func):
+        function = 'TO_CHAR'
+        template = "%(function)s(%(expressions)s, 'DD Month YYYY \"г.\"')"
+
+    if search:
+        receptions = Reception.objects.annotate(
+            search=SearchVector(*FIELDS),
+            similarity_doctor=TrigramSimilarity('doctor__full_name', search),
+            similarity_patient=TrigramSimilarity('patient__full_name', search),
+            similarity_date_reception=TrigramSimilarity(DateFormat(F('date_reception')), search),
+            similarity_time_reception=TrigramSimilarity(Cast('time_reception', CharField()), search)
+        ).filter(
+            Q(search=search) |
+            Q(similarity_doctor=0.1) |
+            Q(similarity_patient=0.1) |
+            Q(similarity_date_reception__gt=0.2) |
+            Q(similarity_time_reception__gt=0.4)
+        )
+    else:
+        receptions = Reception.objects.all().order_by('id')
+            
+    if request.headers.get('HX-Request'):  # Проверка на AJAX (HTMX)
+        html = render(request, 'receptions/reception_search.html', {'receptions': receptions})
+        return HttpResponse(html)
+
+    return render(request, 'receptions/reception_main.html', {'receptions': receptions})
+
+class ReceptionAdd(CreateView, PermissionRequiredMixin):
+    model = Reception
+    form_class = ReceptionForm
+    template_name = 'receptions/reception_add.html'
+    success_url = reverse_lazy('receptions')
+    permission_required = 'stomatology.add_reception'
+
+class ReceptionEdit(UpdateView):
+    model = Reception
+    form_class = ReceptionForm
+    template_name = 'receptions/reception_edit.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('receptions')
+    permission_required = 'stomatology.change_reception'
+
+class ReceptionDelete(DeleteView):
+    model = Reception
+    template_name = 'receptions/reception_delete.html'
+    pk_url_kwarg = 'pk'
+    success_url = reverse_lazy('receptions')
+    permission_required = 'stomatology.delete_reception'
