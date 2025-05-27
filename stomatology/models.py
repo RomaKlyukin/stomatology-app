@@ -1,6 +1,6 @@
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
-
+from django.contrib.postgres.indexes import GinIndex
 
 class Doctor(models.Model):
     full_name = models.CharField("ФИО", max_length=100)
@@ -11,6 +11,9 @@ class Doctor(models.Model):
         db_table = 'doctor'
         verbose_name = 'Врача'
         verbose_name_plural = 'Врачи'
+        indexes = [
+            GinIndex(fields=['full_name', 'phone_number', 'office_number']),
+        ]
 
     def __str__(self):
         return self.full_name
@@ -24,6 +27,9 @@ class Patient(models.Model):
         db_table = 'patient'
         verbose_name = 'Пациента'
         verbose_name_plural = 'Пациенты'
+        indexes = [
+            GinIndex(fields=['full_name', 'phone_number', 'patient_address']),
+        ]
 
     def __str__(self):
         return self.full_name
@@ -39,6 +45,9 @@ class Reception(models.Model):
         verbose_name = 'Прием'
         verbose_name_plural = 'Приемы'
         ordering = ['-id']
+        indexes = [
+            GinIndex(fields=['date_reception', 'time_reception', 'patient', 'doctor']),
+        ]
 
     def __str__(self):
         return f"{str(self.id)} ({self.date_reception} {self.time_reception})"
@@ -51,6 +60,9 @@ class Service(models.Model):
         db_table = 'service'
         verbose_name = 'Услугу'
         verbose_name_plural = 'Услуги'
+        indexes = [
+            GinIndex(fields=['service_name', 'cost']),
+        ]
 
     def __str__(self):
         return f"{self.service_name}({self.cost}руб.)"
@@ -67,6 +79,9 @@ class Service_rendered(models.Model):
         verbose_name = 'Оказанную услугу'
         verbose_name_plural = 'Оказанные услуги'
         ordering = ['-id']
+        indexes = [
+            GinIndex(fields=['service', 'number_reception', 'quantity']),
+        ]
 
     def __str__(self):
         return f"{str(self.id)} ({self.service} ({self.quantity}))"
@@ -91,6 +106,9 @@ class Schedule(models.Model):
         db_table = 'shedule'
         verbose_name = 'Расписание'
         verbose_name_plural = 'Расписание работы врачей'
+        indexes = [
+            GinIndex(fields=['doctor', 'day_week', 'start_reception', 'end_reception']),
+        ]
 
     def __str__(self):
         return f"{self.doctor} - {self.get_day_week_display()}"

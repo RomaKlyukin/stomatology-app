@@ -8,7 +8,7 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.db.models import Q, Case, When, Value, CharField, Func, F
-from django.db.models.functions import Cast
+from django.db.models.functions import Cast, Greatest
 from django.contrib.postgres.search import TrigramSimilarity, SearchVector
 
 
@@ -63,18 +63,18 @@ class UserLogoutView(LogoutView):
 
 
 def doctors_get(request):
-    FIELDS = [field.name for field in Doctor._meta.get_fields()]
+    FIELDS = ["full_name", "phone_number", "office_number"]
     search = request.GET.get('q')
     if search:
         doctors = Doctor.objects.annotate(
             search=SearchVector(*FIELDS),
-            similarity_phone_number=TrigramSimilarity('phone_number', search),
-            similarity_full_name=TrigramSimilarity('full_name', search)
+            similarity_full_name=TrigramSimilarity('full_name', search),
+            similarity_phone_number=TrigramSimilarity('phone_number', search)
         ).filter(
             Q(search=search) |
-            Q(similarity_phone_number__gt=0.25) |
-            Q(similarity_full_name=0.1)
-        )
+            Q(similarity_full_name__gt=0.1) |
+            Q(similarity_phone_number__gt=0.25)
+        ).distinct('id').order_by('id')
     else:
         doctors = Doctor.objects.all().order_by('id')
             
@@ -108,18 +108,30 @@ class DoctorDelete(DeleteView):
 
 
 def patients_get(request):
-    FIELDS = [field.name for field in Patient._meta.get_fields()]
+    FIELDS = ["full_name", "phone_number", "patient_address"]
     search = request.GET.get('q')
+    
     if search:
+        search_vector = SearchVector(*FIELDS)
+        
+        similarity_full_name = TrigramSimilarity('full_name', search)
+        similarity_phone_number = TrigramSimilarity('phone_number', search)
+        similarity_patient_address = TrigramSimilarity('patient_address', search)
+
         patients = Patient.objects.annotate(
-            search=SearchVector(*FIELDS),
-            similarity_phone_number=TrigramSimilarity('phone_number', search),
-            similarity_full_name=TrigramSimilarity('full_name', search)
+            search=search_vector,
+            similarity=Greatest(
+                similarity_full_name,
+                similarity_phone_number,
+                similarity_patient_address
+            )
         ).filter(
-            Q(search=search) |
-            Q(similarity_phone_number__gt=0.25) |
-            Q(similarity_full_name=0.1)
-        )
+            Q(search=search) | 
+            Q(full_name__icontains=search) |
+            Q(phone_number__icontains=search) |
+            Q(patient_address__icontains=search) |
+            Q(similarity__gt=0.6) 
+        ).distinct('id').order_by('id')
     else:
         patients = Patient.objects.all().order_by('id')
             
@@ -152,10 +164,9 @@ class PatientDelete(DeleteView):
     permission_required = 'stomatology.delete_patient'
 
 def schedules_get(request):
-    FIELDS = ['doctor__full_name']
+    FIELDS = ['doctor__full_name', 'day_week', 'start_reception', 'end_reception']
     search = request.GET.get('q')
 
-    # Словарь соответствия номеров дней и их названий
     DAY_WEEK = {
         1: "понедельник",
         2: "вторник",
@@ -167,25 +178,27 @@ def schedules_get(request):
     }
 
     if search:
+        search_vector = SearchVector(*FIELDS)
+        similarity_doctor = TrigramSimilarity('doctor__full_name', search)
+        similarity_day_week = TrigramSimilarity(Case(
+            *[When(day_week=k, then=Value(v)) for k, v in DAY_WEEK.items()],
+            output_field=CharField()
+        ), search)
+
         schedules = Schedule.objects.annotate(
-            day_name=Case(
-                *[When(day_week=k, then=Value(v)) for k, v in DAY_WEEK.items()],
-                output_field=CharField()
-            ),
-            search=SearchVector(*FIELDS),
-            day_similarity=TrigramSimilarity('day_name', search),
-            similarity_doctor=TrigramSimilarity('doctor__full_name', search),
-            similarity_start_reception=TrigramSimilarity(Cast('start_reception', CharField()), search)
+            search=search_vector,
+            similarity=Greatest(
+                similarity_doctor,
+                similarity_day_week
+            )
         ).filter(
             Q(search=search) |
-            Q(day_similarity__gt=0.2) |
-            Q(similarity_doctor=0.1) |
-            Q(similarity_start_reception__gt=0.4)
+            Q(similarity__gt=0.2)
         )
     else:
         schedules = Schedule.objects.all().order_by('id')
             
-    if request.headers.get('HX-Request'):  # Проверка на AJAX (HTMX)
+    if request.headers.get('HX-Request'):
         html = render(request, 'schedules/schedule_search.html', {'schedules': schedules})
         return HttpResponse(html)
 
@@ -214,20 +227,36 @@ class ScheduleDelete(DeleteView):
     permission_required = 'stomatology.delete_schedule'
 
 def services_get(request):
-    FIELDS = [field.name for field in Service._meta.get_fields()]
+    FIELDS = ['service_name', 'cost']
     search = request.GET.get('q')
+    
     if search:
-        services = Service.objects.annotate(
-            search=SearchVector(*FIELDS),
-            similarity_service_name=TrigramSimilarity('service_name', search),
-        ).filter(
-            Q(search=search) |
-            Q(similarity_service_name__gt=0.25)
-        )
+        search_vector = SearchVector(*FIELDS)
+        similarity_service_name = TrigramSimilarity('service_name', search)
+
+        # Попробуем преобразовать строку поиска в число для поиска по стоимости
+        try:
+            cost_search = float(search)
+            services = Service.objects.annotate(
+                search=search_vector,
+                similarity=similarity_service_name
+            ).filter(
+                Q(search=search) |
+                Q(similarity__gt=0.25) |
+                Q(cost=cost_search)  # Поиск по стоимости
+            )
+        except ValueError:
+            services = Service.objects.annotate(
+                search=search_vector,
+                similarity=similarity_service_name
+            ).filter(
+                Q(search=search) |
+                Q(similarity__gt=0.25)
+            )
     else:
         services = Service.objects.all().order_by('id')
             
-    if request.headers.get('HX-Request'):  # Проверка на AJAX (HTMX)
+    if request.headers.get('HX-Request'):
         html = render(request, 'services/service_search.html', {'services': services})
         return HttpResponse(html)
 
@@ -256,20 +285,40 @@ class ServiceDelete(DeleteView):
     permission_required = 'stomatology.delete_service'
 
 def service_rendereds_get(request):
-    FIELDS = [field.name for field in Service_rendered._meta.get_fields()]
+    FIELDS = ["service__service_name", "number_reception__id", "quantity"]
     search = request.GET.get('q')
+    
     if search:
+        search_vector = SearchVector(*FIELDS)
+        similarity_service_name = TrigramSimilarity('service__service_name', search)
+        similarity_number_reception = TrigramSimilarity(Cast('number_reception__id', CharField()), search)
+        similarity_quantity = TrigramSimilarity(Cast('quantity', CharField()), search)
+
         services_rendered = Service_rendered.objects.annotate(
-            search=SearchVector(*FIELDS),
-            similarity_service=TrigramSimilarity('service__service_name', search),
+            search=search_vector,
+            similarity_service=similarity_service_name,
+            similarity_number_reception=similarity_number_reception,
+
         ).filter(
             Q(search=search) |
-            Q(similarity_service_name__gt=0.25)
-        )
+            Q(similarity_service__gt=0.25) |
+            Q(similarity_number_reception__gt=0.1) 
+        ).distinct('id').order_by('id')
+        services_rendered = Service_rendered.objects.annotate(
+            search=search_vector,
+            similarity_service=similarity_service_name,
+            similarity_number_reception=similarity_number_reception,
+            similarity_quantity=similarity_quantity
+        ).filter(
+            Q(search=search) |
+            Q(similarity_service__gt=0.25) |
+            Q(similarity_number_reception__gt=0.25) |
+            Q(similarity_quantity__gt=0.25)
+        ).distinct('id').order_by('id')
     else:
         services_rendered = Service_rendered.objects.all().order_by('id')
             
-    if request.headers.get('HX-Request'):  # Проверка на AJAX (HTMX)
+    if request.headers.get('HX-Request'):
         html = render(request, 'services_rendered/service_rendered_search.html', {'services_rendered': services_rendered})
         return HttpResponse(html)
 
@@ -298,32 +347,36 @@ class Service_renderedDelete(DeleteView):
     permission_required = 'stomatology.delete_service_rendered'
 
 def receptions_get(request):
-    FIELDS = ['doctor__full_name', "patient__full_name"]
+    FIELDS = ['doctor__full_name', 'patient__full_name', 'date_reception', 'time_reception']
     search = request.GET.get('q')
 
-    
     class DateFormat(Func):
         function = 'TO_CHAR'
         template = "%(function)s(%(expressions)s, 'DD Month YYYY \"г.\"')"
 
     if search:
+        search_vector = SearchVector(*FIELDS)
+        similarity_doctor = TrigramSimilarity('doctor__full_name', search)
+        similarity_patient = TrigramSimilarity('patient__full_name', search)
+        similarity_date_reception = TrigramSimilarity(DateFormat(F('date_reception')), search)
+        similarity_time_reception = TrigramSimilarity(Cast('time_reception', CharField()), search)
+
         receptions = Reception.objects.annotate(
-            search=SearchVector(*FIELDS),
-            similarity_doctor=TrigramSimilarity('doctor__full_name', search),
-            similarity_patient=TrigramSimilarity('patient__full_name', search),
-            similarity_date_reception=TrigramSimilarity(DateFormat(F('date_reception')), search),
-            similarity_time_reception=TrigramSimilarity(Cast('time_reception', CharField()), search)
+            search=search_vector,
+            similarity=Greatest(
+                similarity_doctor,
+                similarity_patient,
+                similarity_date_reception,
+                similarity_time_reception
+            )
         ).filter(
             Q(search=search) |
-            Q(similarity_doctor=0.1) |
-            Q(similarity_patient=0.1) |
-            Q(similarity_date_reception__gt=0.2) |
-            Q(similarity_time_reception__gt=0.4)
+            Q(similarity__gt=0.4)
         )
     else:
         receptions = Reception.objects.all().order_by('id')
             
-    if request.headers.get('HX-Request'):  # Проверка на AJAX (HTMX)
+    if request.headers.get('HX-Request'):
         html = render(request, 'receptions/reception_search.html', {'receptions': receptions})
         return HttpResponse(html)
 

@@ -14,14 +14,22 @@
             {% endif %}
         </div>
         
-        <div align="center" style="position: relative; top: 8px">
-            <form method="GET">
+        <div align="center" style="position: relative; top: 8px;
+                                   display: flex; align-items: center; justify-content: center;">
+            <form method="GET" style="display: flex; align-items: center;">
                 {% csrf_token %}
-                <input name="q" required type="text" placeholder="Поиск по таблице          🔍"
-                    hx-get="{% url 'doctors' %}" 
-                    hx-trigger="input changed delay:300ms"
-                    hx-target="#doctor_list"/
-                >
+                <div class="input-group mb-3">
+                    <a href="{% url "doctors" %}">
+                        <button title="Обновить таблицу" class="input-group-text 
+                                bi bi-arrow-clockwise btn btn-light" id="basic-addon1" type="button">
+                        </button>
+                    </a>
+                    <input title="Поиск" name="q" required type="text" placeholder="Поиск по таблице          🔍"
+                        hx-get="{% url 'doctors' %}" 
+                        hx-trigger="input changed delay:300ms"
+                        hx-target="#doctor_list"/
+                    >
+                </div>
             </form>
         </div>
         <br>
